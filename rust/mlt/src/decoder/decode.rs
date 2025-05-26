@@ -123,7 +123,6 @@ impl Decoder {
         id_within_max_safe_integer: bool,
     ) -> MltResult<()> {
         let id_data_stream_metadata = StreamMetadata::decode(&mut self.tile)?;
-
         let id_data_type = match column_metadata.r#type.as_ref() {
             Some(column::Type::ScalarType(scalar_column)) => match scalar_column.r#type {
                 Some(scalar_column::Type::PhysicalType(scalar_type)) => {
