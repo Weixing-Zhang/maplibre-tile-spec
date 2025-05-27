@@ -9,7 +9,7 @@ use crate::data::MapLibreTile;
 use crate::decoder::helpers::{decode_boolean_rle, get_scalar_type_from_column};
 use crate::decoder::varint;
 use crate::encoder::geometry::GeometryScaling;
-use crate::metadata::proto_tileset::{column, scalar_column, Column, ScalarType, TileSetMetadata};
+use crate::metadata::proto_tileset::{Column, TileSetMetadata};
 use crate::metadata::stream::StreamMetadata;
 use crate::{MltError, MltResult};
 
@@ -155,7 +155,6 @@ mod tests {
     }
 
     #[test]
-    #[expect(unused_variables)]
     fn test_decode_id_column_dummy() {
         use crate::metadata::proto_tileset::{
             column, scalar_column, Column, ScalarColumn, ScalarType,
