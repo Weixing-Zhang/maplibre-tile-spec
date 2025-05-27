@@ -180,7 +180,7 @@ mod tests {
             nullability_buffer,
             id_within_max_safe_integer,
         );
-        
+
         assert!(
             result.is_ok() || result.is_err(),
             "decode_id_column should not panic"
