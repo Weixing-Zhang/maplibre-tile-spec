@@ -1,13 +1,9 @@
 use bytes::{Buf, Bytes};
 
-use crate::metadata::proto_tileset::column;
-use crate::metadata::proto_tileset::scalar_column;
-use crate::metadata::proto_tileset::{Column, ScalarType};
-use crate::MltError;
-use crate::MltResult;
-
 #[allow(unused_imports)]
 use crate::metadata::proto_tileset::ScalarColumn;
+use crate::metadata::proto_tileset::{column, scalar_column, Column, ScalarType};
+use crate::{MltError, MltResult};
 
 /// Decodes boolean RLE from the buffer.
 /// - `num_booleans` is the total number of booleans (bits).
