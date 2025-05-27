@@ -59,11 +59,9 @@ pub fn get_scalar_type_from_column(column_metadata: &Column) -> MltResult<Scalar
                 ScalarType::try_from(scalar_type)
                     .map_err(|_| MltError::DecodeError("Invalid scalar type value".to_string()))
             }
-            _ => {
-                Err(MltError::DecodeError(
-                    "Missing or unsupported scalar type".to_string(),
-                ))
-            }
+            _ => Err(MltError::DecodeError(
+                "Missing or unsupported scalar type".to_string(),
+            )),
         },
         _ => Err(MltError::DecodeError("Missing column type".to_string())),
     }
