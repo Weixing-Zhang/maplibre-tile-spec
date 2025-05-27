@@ -155,7 +155,7 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_id_column_dummy() {
+    fn test_decode_id_column() {
         use crate::metadata::proto_tileset::{
             column, scalar_column, Column, ScalarColumn, ScalarType,
         };
@@ -180,7 +180,7 @@ mod tests {
             nullability_buffer,
             id_within_max_safe_integer,
         );
-
+        
         assert!(
             result.is_ok() || result.is_err(),
             "decode_id_column should not panic"

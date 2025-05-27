@@ -45,9 +45,7 @@ pub fn decode_byte_rle(tile: &mut Bytes, num_bytes: usize) -> MltResult<Vec<u8>>
     Ok(result)
 }
 
-/// Get the physical ScalarType from a Column
-/// Returns an error if the column is missing, not scalar,
-/// or does not contain a physical type.
+/// Get the physical scalarType from a Column metadata.
 pub fn get_scalar_type_from_column(column_metadata: &Column) -> MltResult<ScalarType> {
     match column_metadata.r#type.as_ref() {
         Some(column::Type::ScalarType(scalar_column)) => match scalar_column.r#type {
