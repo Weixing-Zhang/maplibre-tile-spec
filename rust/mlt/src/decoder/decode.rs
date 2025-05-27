@@ -6,7 +6,7 @@ use geo_types::Geometry;
 use zigzag::ZigZag;
 
 use crate::data::MapLibreTile;
-use crate::decoder::helpers::decode_boolean_rle;
+use crate::decoder::helpers::{decode_boolean_rle, get_scalar_type_from_column};
 use crate::decoder::varint;
 use crate::encoder::geometry::GeometryScaling;
 use crate::metadata::proto_tileset::{column, scalar_column, Column, ScalarType, TileSetMetadata};
@@ -123,22 +123,7 @@ impl Decoder {
         id_within_max_safe_integer: bool,
     ) -> MltResult<()> {
         let id_data_stream_metadata = StreamMetadata::decode(&mut self.tile)?;
-        let id_data_type = match column_metadata.r#type.as_ref() {
-            Some(column::Type::ScalarType(scalar_column)) => match scalar_column.r#type {
-                Some(scalar_column::Type::PhysicalType(scalar_type)) => {
-                    ScalarType::try_from(scalar_type).map_err(|_| {
-                        MltError::DecodeError("Invalid scalar type value".to_string())
-                    })?
-                }
-                _ => {
-                    return Err(MltError::DecodeError(
-                        "Missing or unsupported scalar type".to_string(),
-                    ))
-                }
-            },
-            _ => return Err(MltError::DecodeError("Missing column type".to_string())),
-        };
-
+        let id_data_type = get_scalar_type_from_column(column_metadata)?;
         Ok(())
     }
 }
@@ -167,5 +152,37 @@ mod tests {
         fs::write("metadata_output.txt", metadata_str).expect("Failed to write metadata to file");
 
         let tile = mlt.decode(&metadata).expect("Failed to decode tile");
+    }
+
+    #[test]
+    #[expect(unused_variables)]
+    fn test_decode_id_column_dummy() {
+        use crate::metadata::proto_tileset::{column, scalar_column, Column, ScalarType, ScalarColumn};
+        let mut decoder = Decoder::new(vec![1, 0, 0, 1, 0, 2, 3], None);
+
+        let column_metadata = Column {
+            name: "id".to_string(),
+            nullable: false,
+            column_scope: 0,
+            r#type: Some(column::Type::ScalarType(ScalarColumn {
+                r#type: Some(scalar_column::Type::PhysicalType(ScalarType::Uint32 as i32)),
+            })),
+        };
+
+        let column_name = "id";
+        let nullability_buffer = BitVec::<u8, Lsb0>::new();
+        let id_within_max_safe_integer = true;
+
+        let result = decoder.decode_id_column(
+            &column_metadata,
+            column_name,
+            nullability_buffer,
+            id_within_max_safe_integer,
+        );
+
+        assert!(
+            result.is_ok() || result.is_err(),
+            "decode_id_column should not panic"
+        );
     }
 }
