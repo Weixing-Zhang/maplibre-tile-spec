@@ -157,7 +157,9 @@ mod tests {
     #[test]
     #[expect(unused_variables)]
     fn test_decode_id_column_dummy() {
-        use crate::metadata::proto_tileset::{column, scalar_column, Column, ScalarType, ScalarColumn};
+        use crate::metadata::proto_tileset::{
+            column, scalar_column, Column, ScalarColumn, ScalarType,
+        };
         let mut decoder = Decoder::new(vec![1, 0, 0, 1, 0, 2, 3], None);
 
         let column_metadata = Column {

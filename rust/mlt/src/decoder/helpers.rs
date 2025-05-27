@@ -1,10 +1,10 @@
 use bytes::{Buf, Bytes};
 
-use crate::MltResult;
-use crate::MltError;
-use crate::metadata::proto_tileset::{Column, ScalarColumn, ScalarType};
 use crate::metadata::proto_tileset::column;
 use crate::metadata::proto_tileset::scalar_column;
+use crate::metadata::proto_tileset::{Column, ScalarColumn, ScalarType};
+use crate::MltError;
+use crate::MltResult;
 
 /// Decodes boolean RLE from the buffer.
 /// - `num_booleans` is the total number of booleans (bits).
@@ -53,9 +53,8 @@ pub fn get_scalar_type_from_column(column_metadata: &Column) -> MltResult<Scalar
     match column_metadata.r#type.as_ref() {
         Some(column::Type::ScalarType(scalar_column)) => match scalar_column.r#type {
             Some(scalar_column::Type::PhysicalType(scalar_type)) => {
-                ScalarType::try_from(scalar_type).map_err(|_| {
-                    MltError::DecodeError("Invalid scalar type value".to_string())
-                })
+                ScalarType::try_from(scalar_type)
+                    .map_err(|_| MltError::DecodeError("Invalid scalar type value".to_string()))
             }
             _ => {
                 return Err(MltError::DecodeError(
