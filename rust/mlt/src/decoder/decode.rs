@@ -182,7 +182,7 @@ mod tests {
         );
 
         assert!(
-            result.is_ok() || result.is_err(),
+            result.is_ok(),
             "decode_id_column should not panic"
         );
     }
