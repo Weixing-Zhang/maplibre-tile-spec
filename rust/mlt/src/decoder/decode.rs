@@ -181,9 +181,6 @@ mod tests {
             id_within_max_safe_integer,
         );
 
-        assert!(
-            result.is_ok(),
-            "decode_id_column should not panic"
-        );
+        assert!(result.is_ok(), "decode_id_column should not panic");
     }
 }
