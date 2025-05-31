@@ -36,6 +36,7 @@ impl Decoder {
     }
     #[expect(unused_variables)]
     pub fn decode(&mut self, tile_metadata: &TileSetMetadata) -> MltResult<MapLibreTile> {
+        let tile_len = self.tile.len();
         while self.tile.has_remaining() {
             let ids: Vec<i64> = vec![];
             let geometries: Vec<Geometry> = vec![];
@@ -60,17 +61,6 @@ impl Decoder {
                         feature_table_id
                     ))
                 })?;
-
-            let property_column_names: Option<&String> = self.config.as_ref().and_then(|cfg| {
-                cfg.feature_table_decoding
-                    .as_ref()
-                    .and_then(|ftd| ftd.get(&feature_table_metadata.name))
-            });
-
-            if property_column_names.is_none() {
-                self.tile.advance(*feature_table_body_size as usize);
-                continue;
-            }
 
             let extent = infos
                 .get(2)
@@ -139,7 +129,7 @@ mod tests {
     #[test]
     #[expect(unused_variables)]
     fn test_decode() {
-        let raw = fs::read("../../ts/test/data/omt/unoptimized/mlt/plain/0_0_0.mlt")
+        let raw = fs::read("../../ts/test/data/omt/unoptimized/mlt/plain/1_1_0.mlt")
             .expect("Failed to read file");
         let mut mlt = Decoder::new(raw, None);
         let metadata = read_metadata(Path::new(

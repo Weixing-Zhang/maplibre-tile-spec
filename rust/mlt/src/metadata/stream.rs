@@ -42,6 +42,8 @@ impl StreamMetadata {
         let physical_stream_type = PhysicalStreamType::try_from(stream_type >> 4)
             .map_err(|_| MltError::DecodeError("Invalid physical stream type".into()))?;
 
+        println!("Physical stream type: {:?}", physical_stream_type);
+
         let logical_stream_type = match physical_stream_type {
             PhysicalStreamType::Data => LogicalStreamType::Dictionary(Some(
                 DictionaryType::try_from(stream_type & 0xF)
@@ -55,6 +57,7 @@ impl StreamMetadata {
                 LengthType::try_from(stream_type & 0xF)
                     .map_err(|_| MltError::DecodeError("Invalid length type".into()))?,
             ),
+            PhysicalStreamType::Present => LogicalStreamType::None,
             _ => {
                 return Err(MltError::DecodeError(
                     "Unexpected physical stream type for logical stream type".into(),
@@ -62,12 +65,15 @@ impl StreamMetadata {
             }
         };
 
-        // let encoding_header = *tile
-        //     .get(offset.position() as usize)
-        //     .ok_or_else(|| MltError::DecodeError("Failed to read encoding header".to_string()))?
-        //     & 0xFF;
         let encoding_header = tile.get_u8();
 
+        println!("Encoding header: {:?}", encoding_header);
+        println!(
+            "Technique1 index: {}, Technique2 index: {}, Physical level technique index: {}",
+            encoding_header >> 5,
+            (encoding_header >> 2) & 0x7,
+            encoding_header & 0x3
+        );
         let logical_level_technique1 = LogicalLevelTechnique::try_from(encoding_header >> 5)
             .map_err(|_| MltError::DecodeError("Invalid logical level technique 1".into()))?;
         let logical_level_technique2 =

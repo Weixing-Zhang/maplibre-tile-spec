@@ -36,6 +36,7 @@ pub enum LogicalStreamType {
     Dictionary(Option<DictionaryType>),
     Offset(OffsetType),
     Length(LengthType),
+    None,
 }
 
 #[derive(Debug, Clone, TryFromPrimitive, PartialEq)]
