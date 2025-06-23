@@ -25,8 +25,8 @@ pub struct Morton {
 
 #[derive(Debug, Clone)]
 pub struct StreamMetadata {
-    logical: Logical,
-    physical: Physical,
+    pub logical: Logical,
+    pub physical: Physical,
     pub num_values: u32,
     pub byte_length: u32,
     morton: Option<Morton>,
