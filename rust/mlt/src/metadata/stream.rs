@@ -29,8 +29,8 @@ pub struct StreamMetadata {
     pub physical: Physical,
     pub num_values: u32,
     pub byte_length: u32,
-    morton: Option<Morton>,
-    rle: Option<Rle>,
+    pub morton: Option<Morton>,
+    pub rle: Option<Rle>,
 }
 
 impl StreamMetadata {
