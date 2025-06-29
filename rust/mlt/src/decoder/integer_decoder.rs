@@ -11,13 +11,19 @@ use fastpfor::rust::Integer as _;
 
 use bytes::{Buf, Bytes};
 
+// decode_int_stream can handlemultiple decoding techniques,
+// some of which do represent signed integers (like varint with ZigZag)
+// so returning Vec<i32>
 pub fn decode_int_stream(
     tile: &mut TrackedBytes,
     stream_metadata: &StreamMetadata,
     is_signed: bool,
 ) -> Vec<i32> {
     if stream_metadata.physical.technique == PhysicalLevelTechnique::FastPfor {
-        return decode_fast_pfor(tile, stream_metadata);
+        decode_fast_pfor(tile, stream_metadata)
+            .into_iter()
+            .map(|x| x as i32)
+            .collect()
     } else if stream_metadata.physical.technique == PhysicalLevelTechnique::Varint {
         let values = varint::decode(tile, stream_metadata.num_values as usize);
         return decode_int_array();
@@ -27,7 +33,7 @@ pub fn decode_int_stream(
     }
 }
 
-fn decode_fast_pfor(tile: &mut TrackedBytes, stream_metadata: &StreamMetadata) -> Vec<i32> {
+fn decode_fast_pfor(tile: &mut TrackedBytes, stream_metadata: &StreamMetadata) -> Vec<u32> {
     let codec = FastPFor128Codec::new();
     let mut decoded = vec![0; stream_metadata.num_values as usize];
     let mut encoded_u32s: Vec<u32> = Vec::with_capacity(stream_metadata.byte_length as usize / 4);
@@ -41,7 +47,7 @@ fn decode_fast_pfor(tile: &mut TrackedBytes, stream_metadata: &StreamMetadata) -
     }
 
     codec.decode32(&encoded_u32s, &mut decoded);
-    decoded.iter().map(|&x| x as i32).collect()
+    decoded
 }
 
 fn decode_int_array() -> Vec<i32> {
@@ -63,11 +69,10 @@ mod tests {
     fn test_decode_fast_pfor_non_empty_placeholder() {
         // Encode a sample input using FastPFor128Codec
         let codec = FastPFor128Codec::new();
-        let input: Vec<i32> = vec![5, 10, 15, 20, 25, 30, 35, 40];
-        let input_u32: Vec<u32> = input.iter().map(|&x| x as u32).collect();
+        let input = vec![5, 10, 15, 20, 25, 30, 35, 40];
         let mut output = vec![0; input.len()];
-        let encoded = codec.encode32(&input_u32, &mut output).unwrap();
-        let byte_length = (encoded.len() * std::mem::size_of::<i32>()) as u32;
+        let encoded = codec.encode32(&input, &mut output).unwrap();
+        let byte_length = (encoded.len() * std::mem::size_of::<u32>()) as u32;
         let num_values = input.len() as u32;
 
         // Prepare the tile as a TrackedBytes instance
@@ -94,7 +99,7 @@ mod tests {
             morton: None,
             rle: None,
         };
-        let result: Vec<i32> = decode_fast_pfor(&mut tile, &stream_metadata);
+        let result = decode_fast_pfor(&mut tile, &stream_metadata);
         assert_eq!(input, result);
         assert_eq!(tile.offset(), byte_length as usize);
     }
