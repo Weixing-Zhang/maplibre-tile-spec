@@ -96,5 +96,6 @@ mod tests {
         };
         let result: Vec<i32> = decode_fast_pfor(&mut tile, &stream_metadata);
         assert_eq!(input, result);
+        assert_eq!(tile.offset(), byte_length as usize);
     }
 }
