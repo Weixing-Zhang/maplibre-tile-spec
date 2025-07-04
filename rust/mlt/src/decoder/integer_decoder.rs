@@ -1,6 +1,7 @@
+use crate::decoder::helpers::bytes_to_encoded_u32s;
 use crate::decoder::tracked_bytes::TrackedBytes;
 use crate::decoder::varint;
-use crate::encoder::helpers::encoded_u32_to_bytes;
+use crate::encoder::helpers::encoded_u32s_to_bytes;
 use crate::metadata::stream::StreamMetadata;
 use crate::metadata::stream_encoding::{
     DictionaryType, LengthType, Logical, LogicalLevelTechnique, LogicalStreamType, OffsetType,
@@ -37,16 +38,8 @@ pub fn decode_int_stream(
 fn decode_fast_pfor(tile: &mut TrackedBytes, stream_metadata: &StreamMetadata) -> Vec<u32> {
     let codec = FastPFor128Codec::new();
     let mut decoded = vec![0; stream_metadata.num_values as usize];
-    let mut encoded_u32s: Vec<u32> = Vec::with_capacity(stream_metadata.byte_length as usize / 4);
-    for _ in 0..(stream_metadata.byte_length / 4) {
-        let b1 = tile.get_u8();
-        let b2 = tile.get_u8();
-        let b3 = tile.get_u8();
-        let b4 = tile.get_u8();
-        let val = u32::from_be_bytes([b1, b2, b3, b4]);
-        encoded_u32s.push(val);
-    }
-
+    let mut encoded_u32s: Vec<u32> =
+        bytes_to_encoded_u32s(tile, stream_metadata.byte_length as usize);
     codec.decode32(&encoded_u32s, &mut decoded);
     decoded
 }
@@ -77,7 +70,7 @@ mod tests {
         let num_values = input.len() as u32;
 
         // Prepare the tile as a TrackedBytes instance
-        let mut encoded_bytes: Vec<u8> = encoded_u32_to_bytes(&encoded);
+        let mut encoded_bytes: Vec<u8> = encoded_u32s_to_bytes(&encoded);
         let mut tile: TrackedBytes = encoded_bytes.into();
 
         // Create a StreamMetadata instance
