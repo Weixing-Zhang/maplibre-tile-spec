@@ -1,5 +1,6 @@
 use crate::decoder::tracked_bytes::TrackedBytes;
 use crate::decoder::varint;
+use crate::encoder::helpers::encoded_u32_to_bytes;
 use crate::metadata::stream::StreamMetadata;
 use crate::metadata::stream_encoding::{
     DictionaryType, LengthType, Logical, LogicalLevelTechnique, LogicalStreamType, OffsetType,
@@ -69,18 +70,14 @@ mod tests {
     fn test_decode_fast_pfor_non_empty_placeholder() {
         // Encode a sample input using FastPFor128Codec
         let codec = FastPFor128Codec::new();
-        let input = vec![5, 10, 15, 20, 25, 30, 35, 40];
+        let input = vec![5, 10, 15, 20, 25, 30, 35];
         let mut output = vec![0; input.len()];
         let encoded = codec.encode32(&input, &mut output).unwrap();
         let byte_length = (encoded.len() * std::mem::size_of::<u32>()) as u32;
         let num_values = input.len() as u32;
 
         // Prepare the tile as a TrackedBytes instance
-        let mut encoded_bytes: Vec<u8> =
-            Vec::with_capacity(encoded.len() * std::mem::size_of::<u32>());
-        for val in encoded.iter() {
-            encoded_bytes.extend(&val.to_be_bytes());
-        }
+        let mut encoded_bytes: Vec<u8> = encoded_u32_to_bytes(&encoded);
         let mut tile: TrackedBytes = encoded_bytes.into();
 
         // Create a StreamMetadata instance
