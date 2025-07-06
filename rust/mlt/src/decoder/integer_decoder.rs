@@ -7,6 +7,7 @@ use crate::metadata::stream_encoding::{
     DictionaryType, LengthType, Logical, LogicalLevelTechnique, LogicalStreamType, OffsetType,
     Physical, PhysicalLevelTechnique, PhysicalStreamType,
 };
+use crate::MltError;
 use fastpfor::cpp::Codec32 as _;
 use fastpfor::cpp::FastPFor128Codec;
 use fastpfor::rust::Integer as _;
@@ -20,19 +21,21 @@ pub fn decode_int_stream(
     tile: &mut TrackedBytes,
     stream_metadata: &StreamMetadata,
     is_signed: bool,
-) -> Vec<i32> {
-    if stream_metadata.physical.technique == PhysicalLevelTechnique::FastPfor {
-        decode_fast_pfor(tile, stream_metadata)
-            .into_iter()
-            .map(|x| x as i32)
-            .collect()
-    } else if stream_metadata.physical.technique == PhysicalLevelTechnique::Varint {
-        let values = varint::decode(tile, stream_metadata.num_values as usize);
-        return decode_int_array();
-    } else {
-        // Handle other techniques or return an empty vector
-        return vec![];
-    }
+) -> Result<Vec<i32>, MltError> {
+    let values = match stream_metadata.physical.technique {
+        PhysicalLevelTechnique::FastPfor => decode_fast_pfor(tile, stream_metadata),
+        PhysicalLevelTechnique::Varint => varint::decode(tile, stream_metadata.num_values as usize),
+        _ => {
+            return Err(MltError::UnsupportedIntStreamTechnique(format!(
+                "{:?}",
+                stream_metadata.physical.technique
+            )));
+        }
+    };
+
+    let result = values.into_iter().map(|x| x as i32).collect();
+
+    Ok(result)
 }
 
 fn decode_fast_pfor(tile: &mut TrackedBytes, stream_metadata: &StreamMetadata) -> Vec<u32> {
