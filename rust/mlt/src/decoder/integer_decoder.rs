@@ -14,7 +14,7 @@ use fastpfor::rust::Integer as _;
 
 use bytes::{Buf, Bytes};
 
-// decode_int_stream can handlemultiple decoding techniques,
+// decode_int_stream can handle multiple decoding techniques,
 // some of which do represent signed integers (like varint with ZigZag)
 // so returning Vec<i32>
 pub fn decode_int_stream(
@@ -22,6 +22,7 @@ pub fn decode_int_stream(
     stream_metadata: &StreamMetadata,
     is_signed: bool,
 ) -> Result<Vec<i32>, MltError> {
+    // Byte-level decoding based on the physical technique and stream type
     let values = match stream_metadata.physical.technique {
         PhysicalLevelTechnique::FastPfor => decode_fast_pfor(tile, stream_metadata),
         PhysicalLevelTechnique::Varint => varint::decode(tile, stream_metadata.num_values as usize),
@@ -36,6 +37,8 @@ pub fn decode_int_stream(
     let result = values.into_iter().map(|x| x as i32).collect();
 
     Ok(result)
+
+    // Conceptual decoding based on the logical technique and type
 }
 
 fn decode_fast_pfor(tile: &mut TrackedBytes, stream_metadata: &StreamMetadata) -> Vec<u32> {
