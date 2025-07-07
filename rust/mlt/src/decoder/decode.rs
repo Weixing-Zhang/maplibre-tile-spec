@@ -6,10 +6,9 @@ use geo_types::Geometry;
 use zigzag::ZigZag;
 
 use crate::data::MapLibreTile;
+use crate::decoder;
 use crate::decoder::helpers::{decode_boolean_rle, get_data_type_from_column};
-use crate::decoder::integer;
 use crate::decoder::tracked_bytes::TrackedBytes;
-use crate::decoder::varint;
 use crate::encoder::geometry::GeometryScaling;
 use crate::metadata::proto_tileset::{Column, ScalarType, TileSetMetadata};
 use crate::metadata::stream::StreamMetadata;
@@ -44,7 +43,7 @@ impl Decoder {
             let geometries: Vec<Geometry> = vec![];
 
             let version = self.tile.get_u8();
-            let infos = varint::decode(&mut self.tile, 5);
+            let infos = decoder::varint::decode(&mut self.tile, 5);
 
             println!("infos: {:?}", infos);
 
@@ -88,7 +87,7 @@ impl Decoder {
             })?;
 
             for col_metadata in feature_table_metadata.columns.iter() {
-                let num_streams_vec = varint::decode(&mut self.tile, 1);
+                let num_streams_vec = decoder::varint::decode(&mut self.tile, 1);
                 let num_streams = num_streams_vec.first().ok_or_else(|| {
                     MltError::DecodeError("Failed to retrieve num_streams".to_string())
                 })?;
@@ -111,7 +110,7 @@ impl Decoder {
                     if id_data_type == ScalarType::Uint32 {
                         print!("Decoding ID column with Uint32 type\n");
                         // TODO (Weixing): Implement decode_int_stream here
-                        let ids = integer::decode_int_stream(
+                        let ids = decoder::integer::decode_int_stream(
                             &mut self.tile,
                             &id_data_stream_metadata,
                             false,
