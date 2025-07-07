@@ -63,8 +63,19 @@ fn bytes_to_encoded_u32s(tile: &mut TrackedBytes, num_bytes: usize) -> Vec<u32> 
     encoded_u32s
 }
 
-fn decode_int_array() -> Vec<i32> {
-    vec![]
+fn decode_zigzag() -> Result<Vec<i32>, MltError> {
+    // Placeholder for ZigZag decoding logic
+    Ok(vec![])
+}
+
+fn decode_zigzag_delta() -> Result<Vec<i32>, MltError> {
+    // Placeholder for ZigZag decoding logic
+    Ok(vec![])
+}
+
+fn decode_morton() -> Result<Vec<i32>, MltError> {
+    // Placeholder for Morton decoding logic
+    Ok(vec![])
 }
 
 #[cfg(test)]
