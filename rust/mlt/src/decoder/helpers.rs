@@ -63,20 +63,6 @@ pub fn get_data_type_from_column(column_metadata: &Column) -> MltResult<ScalarTy
     }
 }
 
-pub fn bytes_to_encoded_u32s(tile: &mut TrackedBytes, num_bytes: usize) -> Vec<u32> {
-    let num_bytes = num_bytes / 4;
-    let mut encoded_u32s: Vec<u32> = Vec::with_capacity(num_bytes);
-    for _ in 0..num_bytes {
-        let b1 = tile.get_u8();
-        let b2 = tile.get_u8();
-        let b3 = tile.get_u8();
-        let b4 = tile.get_u8();
-        let val = u32::from_be_bytes([b1, b2, b3, b4]);
-        encoded_u32s.push(val);
-    }
-    encoded_u32s
-}
-
 #[test]
 fn test_decode_byte_rle() -> MltResult<()> {
     let mut tile: TrackedBytes = [0x03, 0x01].as_slice().into();
@@ -105,13 +91,4 @@ fn test_get_data_type_from_column() {
     };
     let data_type = get_data_type_from_column(&column_metadata).expect("should parse ScalarType");
     assert_eq!(data_type, ScalarType::Uint32);
-}
-
-#[test]
-fn test_bytes_to_encoded_u32s() {
-    let mut tile: TrackedBytes = [0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef]
-        .as_slice()
-        .into();
-    let result = bytes_to_encoded_u32s(&mut tile, 8);
-    assert_eq!(result, vec![0x12345678, 0x90abcdef]);
 }

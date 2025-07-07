@@ -1,7 +1,6 @@
-use crate::decoder::helpers::bytes_to_encoded_u32s;
 use crate::decoder::tracked_bytes::TrackedBytes;
 use crate::decoder::varint;
-use crate::encoder::helpers::encoded_u32s_to_bytes;
+use crate::encoder::integer::encoded_u32s_to_bytes;
 use crate::metadata::stream::StreamMetadata;
 use crate::metadata::stream_encoding::{
     DictionaryType, LengthType, Logical, LogicalLevelTechnique, LogicalStreamType, OffsetType,
@@ -48,6 +47,20 @@ fn decode_fast_pfor(tile: &mut TrackedBytes, stream_metadata: &StreamMetadata) -
         bytes_to_encoded_u32s(tile, stream_metadata.byte_length as usize);
     codec.decode32(&encoded_u32s, &mut decoded);
     decoded
+}
+
+fn bytes_to_encoded_u32s(tile: &mut TrackedBytes, num_bytes: usize) -> Vec<u32> {
+    let num_bytes = num_bytes / 4;
+    let mut encoded_u32s: Vec<u32> = Vec::with_capacity(num_bytes);
+    for _ in 0..num_bytes {
+        let b1 = tile.get_u8();
+        let b2 = tile.get_u8();
+        let b3 = tile.get_u8();
+        let b4 = tile.get_u8();
+        let val = u32::from_be_bytes([b1, b2, b3, b4]);
+        encoded_u32s.push(val);
+    }
+    encoded_u32s
 }
 
 fn decode_int_array() -> Vec<i32> {
@@ -98,5 +111,14 @@ mod tests {
         let result = decode_fast_pfor(&mut tile, &stream_metadata);
         assert_eq!(input, result);
         assert_eq!(tile.offset(), byte_length as usize);
+    }
+
+    #[test]
+    fn test_bytes_to_encoded_u32s() {
+        let mut tile: TrackedBytes = [0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef]
+            .as_slice()
+            .into();
+        let result = bytes_to_encoded_u32s(&mut tile, 8);
+        assert_eq!(result, vec![0x12345678, 0x90abcdef]);
     }
 }
