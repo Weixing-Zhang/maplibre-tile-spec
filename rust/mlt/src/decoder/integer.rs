@@ -63,17 +63,28 @@ fn bytes_to_encoded_u32s(tile: &mut TrackedBytes, num_bytes: usize) -> Vec<u32> 
     encoded_u32s
 }
 
+// TODO (Weixing): can handle both integer and long
 fn decode_zigzag() -> Result<Vec<i32>, MltError> {
     // Placeholder for ZigZag decoding logic
     Ok(vec![])
 }
 
 fn decode_zigzag_delta() -> Result<Vec<i32>, MltError> {
-    // Placeholder for ZigZag decoding logic
+    // Placeholder for ZigZag delt decoding logic which requires decode_zigzag first
     Ok(vec![])
 }
 
 fn decode_morton() -> Result<Vec<i32>, MltError> {
+    // Placeholder for Morton decoding logic
+    Ok(vec![])
+}
+
+fn decode_morton_code() -> Result<Vec<i32>, MltError> {
+    // Placeholder for Morton decoding logic
+    Ok(vec![])
+}
+
+fn decode_morton_codes() -> Result<Vec<i32>, MltError> {
     // Placeholder for Morton decoding logic
     Ok(vec![])
 }
