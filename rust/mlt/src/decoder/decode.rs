@@ -7,7 +7,7 @@ use zigzag::ZigZag;
 
 use crate::data::MapLibreTile;
 use crate::decoder::helpers::{decode_boolean_rle, get_data_type_from_column};
-use crate::decoder::integer_decoder;
+use crate::decoder::integer;
 use crate::decoder::tracked_bytes::TrackedBytes;
 use crate::decoder::varint;
 use crate::encoder::geometry::GeometryScaling;
@@ -111,7 +111,7 @@ impl Decoder {
                     if id_data_type == ScalarType::Uint32 {
                         print!("Decoding ID column with Uint32 type\n");
                         // TODO (Weixing): Implement decode_int_stream here
-                        let ids = integer_decoder::decode_int_stream(
+                        let ids = integer::decode_int_stream(
                             &mut self.tile,
                             &id_data_stream_metadata,
                             false,
