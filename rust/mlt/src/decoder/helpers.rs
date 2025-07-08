@@ -47,11 +47,6 @@ pub fn decode_byte_rle(tile: &mut TrackedBytes, num_bytes: usize) -> MltResult<V
     Ok(result)
 }
 
-fn decode_unsigned_rle() -> Result<Vec<u32>, MltError> {
-    // Placeholder for unsigned RLE decoding logic
-    Ok(vec![])
-}
-
 /// Get the physical scalarType from a Column metadata.
 pub fn get_data_type_from_column(column_metadata: &Column) -> MltResult<ScalarType> {
     match column_metadata.r#type.as_ref() {

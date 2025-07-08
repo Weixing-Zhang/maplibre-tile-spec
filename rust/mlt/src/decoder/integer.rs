@@ -74,6 +74,16 @@ fn decode_zigzag_delta() -> Result<Vec<i32>, MltError> {
     Ok(vec![])
 }
 
+fn decode_rle() -> Result<Vec<u32>, MltError> {
+    // Placeholder for RLE decoding logic
+    Ok(vec![])
+}
+
+pub fn decode_unsigned_rle() -> Result<Vec<u32>, MltError> {
+    // Placeholder for unsigned RLE decoding logic
+    Ok(vec![])
+}
+
 fn decode_morton() -> Result<Vec<i32>, MltError> {
     // Placeholder for Morton decoding logic
     Ok(vec![])
