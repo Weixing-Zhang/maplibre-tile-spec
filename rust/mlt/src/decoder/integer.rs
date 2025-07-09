@@ -63,6 +63,12 @@ fn bytes_to_encoded_u32s(tile: &mut TrackedBytes, num_bytes: usize) -> Vec<u32> 
     encoded_u32s
 }
 
+// ---------------- The followings need to be imiplemented by their order ----------------
+pub fn decode_unsigned_rle() -> Result<Vec<u32>, MltError> {
+    // Placeholder for unsigned RLE decoding logic
+    Ok(vec![])
+}
+
 // TODO (Weixing): can handle both integer and long
 fn decode_zigzag() -> Result<Vec<i32>, MltError> {
     // Placeholder for ZigZag decoding logic
@@ -79,8 +85,9 @@ fn decode_rle() -> Result<Vec<u32>, MltError> {
     Ok(vec![])
 }
 
-pub fn decode_unsigned_rle() -> Result<Vec<u32>, MltError> {
-    // Placeholder for unsigned RLE decoding logic
+// Todo do decode_componentwise_delta_vec2 in vectorized/helpers.rs
+fn decode_componentwise_delta_vec2() -> Result<Vec<i32>, MltError> {
+    // Placeholder for componentwise_delta_vec2 decoding logic
     Ok(vec![])
 }
 
