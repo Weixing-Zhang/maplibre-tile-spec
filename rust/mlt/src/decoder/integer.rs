@@ -140,7 +140,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_decode_fast_pfor_non_empty_placeholder() {
+    fn test_decode_fast_pfor() {
         // Encode a sample input using FastPFor128Codec
         let codec = FastPFor128Codec::new();
         let input = vec![5, 10, 15, 20, 25, 30, 35];
@@ -184,7 +184,7 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_unsigned_rle_simple() {
+    fn test_decode_unsigned_rle() {
         let rle_meta = Rle {
             runs: 3,
             num_rle_values: 6,
