@@ -66,7 +66,7 @@ fn bytes_to_encoded_u32s(tile: &mut TrackedBytes, num_bytes: usize) -> Vec<u32> 
     encoded_u32s
 }
 
-fn decode_unsigned_rle<T: PrimInt + Unsigned + ToPrimitive>(
+fn decode_unsigned_rle<T: PrimInt + Unsigned>(
     data: &[T],
     rle_meta: &Rle,
 ) -> Result<Vec<T>, MltError> {
