@@ -1,7 +1,7 @@
 use crate::decoder::tracked_bytes::TrackedBytes;
 use crate::decoder::varint;
 use crate::encoder::integer::encoded_u32s_to_bytes;
-use crate::metadata::stream::StreamMetadata;
+use crate::metadata::stream::{Morton, Rle, StreamMetadata};
 use crate::metadata::stream_encoding::{
     DictionaryType, LengthType, Logical, LogicalLevelTechnique, LogicalStreamType, OffsetType,
     Physical, PhysicalLevelTechnique, PhysicalStreamType,
@@ -12,6 +12,9 @@ use fastpfor::cpp::FastPFor128Codec;
 use fastpfor::rust::Integer as _;
 
 use bytes::{Buf, Bytes};
+use num_traits::{PrimInt, ToPrimitive, Unsigned};
+use serde_columnar::ColumnarError;
+use std::io;
 
 // decode_int_stream can handle multiple decoding techniques,
 // some of which do represent signed integers (like varint with ZigZag)
@@ -63,12 +66,36 @@ fn bytes_to_encoded_u32s(tile: &mut TrackedBytes, num_bytes: usize) -> Vec<u32> 
     encoded_u32s
 }
 
-// ---------------- The followings need to be imiplemented by their order ----------------
-pub fn decode_unsigned_rle() -> Result<Vec<u32>, MltError> {
-    // Placeholder for unsigned RLE decoding logic
-    Ok(vec![])
+fn decode_unsigned_rle<T: PrimInt + Unsigned + ToPrimitive>(
+    data: &[T],
+    rle_meta: &Rle,
+) -> Result<Vec<T>, MltError> {
+    let runs = rle_meta.runs as usize;
+    let total = rle_meta.num_rle_values as usize;
+
+    if data.len() != runs * 2 {
+        return Err(MltError::RleDecodeError(
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!(
+                    "Unexpected RLE data length: got {}, expected {}",
+                    data.len(),
+                    runs * 2
+                ),
+            )
+            .into(),
+        ));
+    }
+
+    let (run_lens, values) = data.split_at(runs);
+    let mut result = Vec::with_capacity(total);
+    for (&run, &val) in run_lens.iter().zip(values.iter()) {
+        result.extend(std::iter::repeat(val).take(run.to_usize().unwrap()));
+    }
+    Ok(result)
 }
 
+// ---------------- The followings need to be imiplemented by their order ----------------
 // TODO (Weixing): can handle both integer and long
 fn decode_zigzag() -> Result<Vec<i32>, MltError> {
     // Placeholder for ZigZag decoding logic
@@ -113,11 +140,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_decode_fast_pfor_empty() {
-        assert_eq!(vec![1], vec![1]);
-    }
-
-    #[test]
     fn test_decode_fast_pfor_non_empty_placeholder() {
         // Encode a sample input using FastPFor128Codec
         let codec = FastPFor128Codec::new();
@@ -159,5 +181,21 @@ mod tests {
             .into();
         let result = bytes_to_encoded_u32s(&mut tile, 8);
         assert_eq!(result, vec![0x12345678, 0x90abcdef]);
+    }
+
+    #[test]
+    fn test_decode_unsigned_rle_simple() {
+        let rle_meta = Rle {
+            runs: 3,
+            num_rle_values: 6,
+        };
+
+        let data_u32: Vec<u32> = vec![3, 2, 1, 10, 20, 30];
+        let decoded_u32 = decode_unsigned_rle::<u32>(&data_u32, &rle_meta).unwrap();
+        assert_eq!(decoded_u32, vec![10, 10, 10, 20, 20, 30]);
+
+        let data_u64: Vec<u64> = vec![3, 2, 1, 10, 20, 30];
+        let decoded_u64 = decode_unsigned_rle::<u64>(&data_u64, &rle_meta).unwrap();
+        assert_eq!(decoded_u64, vec![10, 10, 10, 20, 20, 30]);
     }
 }
