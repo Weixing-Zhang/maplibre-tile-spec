@@ -16,9 +16,9 @@ use num_traits::PrimInt;
 use serde_columnar::ColumnarError;
 use std::io;
 
-// decode_int_stream can handle multiple decoding techniques,
-// some of which do represent signed integers (like varint with ZigZag)
-// so returning Vec<i32>
+/// decode_int_stream can handle multiple decoding techniques,
+/// some of which do represent signed integers (like varint with ZigZag)
+/// so returning Vec<i32>
 pub fn decode_int_stream(
     tile: &mut TrackedBytes,
     stream_metadata: &StreamMetadata,
@@ -66,6 +66,8 @@ fn bytes_to_encoded_u32s(tile: &mut TrackedBytes, num_bytes: usize) -> Vec<u32> 
     encoded_u32s
 }
 
+/// Decode RLE (Run-Length Encoding) data
+/// It serves the same purpose as the `decodeUnsignedRLE` and `decodeRLE` methods in the Java code.
 fn decode_rle<T: PrimInt>(data: &[T], rle_meta: &Rle) -> Result<Vec<T>, MltError> {
     let runs = rle_meta.runs as usize;
     let total = rle_meta.num_rle_values as usize;
