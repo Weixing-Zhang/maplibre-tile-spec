@@ -12,7 +12,7 @@ use fastpfor::cpp::FastPFor128Codec;
 use fastpfor::rust::Integer as _;
 
 use bytes::{Buf, Bytes};
-use num_traits::{PrimInt, ToPrimitive, Unsigned};
+use num_traits::PrimInt;
 use serde_columnar::ColumnarError;
 use std::io;
 
@@ -66,10 +66,7 @@ fn bytes_to_encoded_u32s(tile: &mut TrackedBytes, num_bytes: usize) -> Vec<u32> 
     encoded_u32s
 }
 
-fn decode_unsigned_rle<T: PrimInt + Unsigned>(
-    data: &[T],
-    rle_meta: &Rle,
-) -> Result<Vec<T>, MltError> {
+fn decode_rle<T: PrimInt>(data: &[T], rle_meta: &Rle) -> Result<Vec<T>, MltError> {
     let runs = rle_meta.runs as usize;
     let total = rle_meta.num_rle_values as usize;
 
@@ -104,11 +101,6 @@ fn decode_zigzag() -> Result<Vec<i32>, MltError> {
 
 fn decode_zigzag_delta() -> Result<Vec<i32>, MltError> {
     // Placeholder for ZigZag delt decoding logic which requires decode_zigzag first
-    Ok(vec![])
-}
-
-fn decode_rle() -> Result<Vec<u32>, MltError> {
-    // Placeholder for RLE decoding logic
     Ok(vec![])
 }
 
@@ -184,18 +176,26 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_unsigned_rle() {
+    fn test_decode_rle() {
         let rle_meta = Rle {
             runs: 3,
             num_rle_values: 6,
         };
 
         let data_u32: Vec<u32> = vec![3, 2, 1, 10, 20, 30];
-        let decoded_u32 = decode_unsigned_rle::<u32>(&data_u32, &rle_meta).unwrap();
+        let decoded_u32 = decode_rle::<u32>(&data_u32, &rle_meta).unwrap();
         assert_eq!(decoded_u32, vec![10, 10, 10, 20, 20, 30]);
 
         let data_u64: Vec<u64> = vec![3, 2, 1, 10, 20, 30];
-        let decoded_u64 = decode_unsigned_rle::<u64>(&data_u64, &rle_meta).unwrap();
+        let decoded_u64 = decode_rle::<u64>(&data_u64, &rle_meta).unwrap();
         assert_eq!(decoded_u64, vec![10, 10, 10, 20, 20, 30]);
+
+        let data_i32: Vec<i32> = vec![3, 2, 1, -10, 20, 30];
+        let decoded_i32 = decode_rle::<i32>(&data_i32, &rle_meta).unwrap();
+        assert_eq!(decoded_i32, vec![-10, -10, -10, 20, 20, 30]);
+
+        let data_i64: Vec<i64> = vec![3, 2, 1, -10, 20, 30];
+        let decoded_i64 = decode_rle::<i64>(&data_i64, &rle_meta).unwrap();
+        assert_eq!(decoded_i64, vec![-10, -10, -10, 20, 20, 30]);
     }
 }
