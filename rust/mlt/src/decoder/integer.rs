@@ -15,6 +15,7 @@ use bytes::{Buf, Bytes};
 use num_traits::PrimInt;
 use serde_columnar::ColumnarError;
 use std::io;
+use zigzag::ZigZag;
 
 /// decode_int_stream can handle multiple decoding techniques,
 /// some of which do represent signed integers (like varint with ZigZag)
@@ -94,13 +95,13 @@ fn decode_rle<T: PrimInt>(data: &[T], rle_meta: &Rle) -> Result<Vec<T>, MltError
     Ok(result)
 }
 
-// ---------------- The followings need to be imiplemented by their order ----------------
-// TODO (Weixing): can handle both integer and long
-fn decode_zigzag() -> Result<Vec<i32>, MltError> {
-    // Placeholder for ZigZag decoding logic
-    Ok(vec![])
+/// Decode ZigZag encoded a vector of unsigned integers.
+fn decode_zigzag<T: ZigZag>(data: &[T::UInt]) -> Result<Vec<T>, MltError> {
+    let decoded = data.iter().map(|&v| T::decode(v)).collect();
+    Ok(decoded)
 }
 
+// ---------------- The followings need to be imiplemented by their order ----------------
 fn decode_zigzag_delta() -> Result<Vec<i32>, MltError> {
     // Placeholder for ZigZag delt decoding logic which requires decode_zigzag first
     Ok(vec![])
@@ -199,5 +200,18 @@ mod tests {
         let data_i64: Vec<i64> = vec![3, 2, 1, -10, 20, 30];
         let decoded_i64 = decode_rle::<i64>(&data_i64, &rle_meta).unwrap();
         assert_eq!(decoded_i64, vec![-10, -10, -10, 20, 20, 30]);
+    }
+
+    #[test]
+    fn test_decode_zigzag() {
+        let encoded_u32 = vec![0u32, 1, 2, 3, 4, 5];
+        let expected_i32 = vec![0i32, -1, 1, -2, 2, -3];
+        let decoded_i32 = decode_zigzag::<i32>(&encoded_u32).unwrap();
+        assert_eq!(decoded_i32, expected_i32);
+
+        let encoded_u64 = vec![0u64, 1, 2, 3, 4, 5];
+        let expected_i64 = vec![0i64, -1, 1, -2, 2, -3];
+        let decoded_i64 = decode_zigzag::<i64>(&encoded_u64).unwrap();
+        assert_eq!(decoded_i64, expected_i64);
     }
 }
