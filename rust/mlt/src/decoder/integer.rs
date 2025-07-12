@@ -72,21 +72,6 @@ fn bytes_to_encoded_u32s(tile: &mut TrackedBytes, num_bytes: usize) -> Vec<u32> 
 fn decode_rle<T: PrimInt>(data: &[T], rle_meta: &Rle) -> Result<Vec<T>, MltError> {
     let runs = rle_meta.runs as usize;
     let total = rle_meta.num_rle_values as usize;
-
-    if data.len() != runs * 2 {
-        return Err(MltError::RleDecodeError(
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!(
-                    "Unexpected RLE data length: got {}, expected {}",
-                    data.len(),
-                    runs * 2
-                ),
-            )
-            .into(),
-        ));
-    }
-
     let (run_lens, values) = data.split_at(runs);
     let mut result = Vec::with_capacity(total);
     for (&run, &val) in run_lens.iter().zip(values.iter()) {
