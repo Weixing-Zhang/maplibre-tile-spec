@@ -23,17 +23,16 @@ pub enum MltError {
     #[error("Unsupported technique in decode_int_stream: {0:?}")]
     UnsupportedIntStreamTechnique(String),
 
-    // ------------ One #[from] per external source type
+    //---------------------------------------------------------
+    // Refacotred to use `thiserror` for better error handling
+    //---------------------------------------------------------
     #[error(transparent)]
     Io(#[from] std::io::Error),
 
     #[error(transparent)]
     RleDecode(#[from] serde_columnar::ColumnarError),
 
-    // If you have a concrete protobuf error type, prefer transparent:
-    // #[error(transparent)]
-    // Protobuf(#[from] prost::DecodeError),
-    // Otherwise, keep a structured one with a #[source]:
+    // Till here: 2025-08-10
     #[error("Protobuf decode failed at offset={offset}")]
     Protobuf {
         #[source]
