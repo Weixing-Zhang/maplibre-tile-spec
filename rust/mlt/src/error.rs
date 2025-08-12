@@ -32,23 +32,19 @@ pub enum MltError {
     #[error(transparent)]
     RleDecode(#[from] serde_columnar::ColumnarError),
 
-    // Till here: 2025-08-10
     #[error("Protobuf decode failed at offset={offset}")]
     Protobuf {
         #[source]
-        source: Box<dyn std::error::Error + Send + Sync + 'static>,
+        source: Box<dyn std::error::Error + Sync + Send + 'static>,
         offset: usize,
     },
 
-    // ------------ Varint: the crate doesn't expose a concrete public error type
-    // so wrap it as a source trait object (no String allocation on creation).
     #[error("Varint decode error")]
     Varint {
         #[source]
-        source: Box<dyn std::error::Error + Send + Sync + 'static>,
+        source: Box<dyn std::error::Error + Sync + Send + 'static>,
     },
 
-    // ------------ Typed, programmatically matchable variants
     #[error("FastPFor decode failed: expected={expected} got={got}")]
     FastPforDecode { expected: usize, got: usize },
 
