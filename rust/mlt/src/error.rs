@@ -24,63 +24,180 @@ pub enum MltError {
     UnsupportedIntStreamTechnique(String),
 
     //---------------------------------------------------------
-    // Refacotred to use `thiserror` for better error handling
+    // Structured, allocation-light
     //---------------------------------------------------------
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
 
-    #[error(transparent)]
-    RleDecode(#[from] serde_columnar::ColumnarError),
-
-    #[error("Protobuf decode failed at offset={offset}")]
-    Protobuf {
-        #[source]
-        source: Box<dyn std::error::Error + Sync + Send + 'static>,
-        offset: usize,
+    //---------------------------------------------------------
+    // Parsing / validation
+    //---------------------------------------------------------
+    #[error("Property parse error: field={field} at={at:?} kind={kind:?}")]
+    PropertyParse {
+        field: &'static str,
+        at: Option<usize>,
+        kind: PropertyParseKind,
     },
 
-    #[error("Varint decode error")]
-    Varint {
-        #[source]
-        source: Box<dyn std::error::Error + Sync + Send + 'static>,
-    },
+    #[error("Unsupported key type: code={code}")]
+    UnsupportedKeyTypeCode { code: u8 },
 
-    #[error("FastPFor decode failed: expected={expected} got={got}")]
-    FastPforDecode { expected: usize, got: usize },
+    #[error("Unsupported geometry type: code={code}")]
+    UnsupportedGeometryCode { code: u32 },
 
     #[error("Missing required field `{field}`")]
     MissingField { field: &'static str },
 
-    #[error("Invalid value for `{field}`: {value}")]
-    InvalidFieldValue { field: &'static str, value: String },
+    #[error("Invalid numeric value for `{field}`: got={got}")]
+    InvalidNumeric { field: &'static str, got: u64 },
 
+    #[error("Input length must be a multiple of {multiple_of}, got {got}")]
+    InvalidLength { multiple_of: usize, got: usize },
+
+    #[error("Index {index} is out of bounds for length {len}")]
+    OutOfBounds { index: usize, len: usize },
+
+    //---------------------------------------------------------
+    // Decoding
+    //---------------------------------------------------------
+    #[error("Varint decode error at={at:?} kind={kind:?}")]
+    Varint {
+        at: Option<usize>,
+        kind: VarintError,
+    },
+
+    #[error("Protobuf decode error at offset={offset} kind={kind:?}")]
+    Protobuf { offset: usize, kind: ProtobufError },
+
+    #[error("Metadata decode error: field={field} kind={kind:?}")]
+    MetadataDecode {
+        field: &'static str,
+        kind: MetadataErrorKind,
+    },
+
+    #[error("Run-length decode would exceed target length: runs={runs} target={target}")]
+    RleOverflow { runs: usize, target: usize },
+
+    #[error("FastPFor decode failed: expected={expected} got={got}")]
+    FastPforDecode { expected: usize, got: usize },
+
+    //---------------------------------------------------------
+    // Arithmetic / numeric
+    //---------------------------------------------------------
+    #[error("Coordinate {coordinate} too large for i32 (shift={shift})")]
+    CoordinateOverflow { coordinate: u32, shift: u32 },
+
+    #[error("Subtract overflow: {lhs} - {rhs}")]
+    SubtractOverflow { lhs: i32, rhs: i32 },
+
+    //---------------------------------------------------------
+    // Technique selection
+    //---------------------------------------------------------
     #[error("Unsupported technique at {level:?}: {technique:?}")]
     UnsupportedTechnique {
         level: ErrorLevel,
         technique: TechniqueDiscriminant,
     },
 
-    #[error("Input length must be a multiple of {multiple_of}, got {got}")]
-    InvalidLength { multiple_of: usize, got: usize },
+    //---------------------------------------------------------
+    // Passthrough (external errors; creating these is zero-alloc in our code)
+    //---------------------------------------------------------
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
 
-    #[error("Run-length decode would exceed target length: runs={runs} target={target}")]
-    RleOverflow { runs: usize, target: usize },
-
-    #[error("Coordinate {coordinate} too large for i32 (shift={shift})")]
-    CoordinateOverflow { coordinate: u32, shift: u32 },
-
-    #[error("Subtract overflow: {lhs} - {rhs}")]
-    SubtractOverflow { lhs: i32, rhs: i32 },
+    #[error(transparent)]
+    RleDecode(#[from] serde_columnar::ColumnarError),
 }
 
+/// Where the technique applies.
 #[derive(Debug)]
 pub enum ErrorLevel {
     Physical,
     Logical,
 }
 
+/// Technique discriminant for messages.
 #[derive(Debug)]
 pub enum TechniqueDiscriminant {
     Physical(PhysicalLevelTechnique),
     Logical(LogicalLevelTechnique),
+}
+
+/// Fine-grained parse kinds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PropertyParseKind {
+    InvalidUtf8,
+    TypeMismatch,
+    NumberParse,
+    UnexpectedNull,
+    UnexpectedEnd,
+    Other,
+}
+
+/// Varint failures.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VarintError {
+    Eof,
+    TooLong,
+    Overflow,
+    NonCanonical,
+}
+
+/// Coarse protobuf failures (no heap message).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ProtobufError {
+    Truncated,
+    Malformed,
+    InvalidTag,
+    UnexpectedWireType,
+    Utf8,
+    Other,
+}
+
+/// Metadata decoding failures.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MetadataErrorKind {
+    Missing,
+    Malformed,
+    TypeMismatch,
+    OutOfRange,
+    Other,
+}
+
+// Helper functions
+impl MltError {
+    #[inline]
+    pub fn varint_eof(at: Option<usize>) -> Self {
+        Self::Varint {
+            at,
+            kind: VarintError::Eof,
+        }
+    }
+    #[inline]
+    pub fn varint_overflow(at: Option<usize>) -> Self {
+        Self::Varint {
+            at,
+            kind: VarintError::Overflow,
+        }
+    }
+    #[inline]
+    pub fn protobuf(offset: usize, kind: ProtobufError) -> Self {
+        Self::Protobuf { offset, kind }
+    }
+    #[inline]
+    pub fn unsupported_physical(tech: PhysicalLevelTechnique) -> Self {
+        Self::UnsupportedTechnique {
+            level: ErrorLevel::Physical,
+            technique: TechniqueDiscriminant::Physical(tech),
+        }
+    }
+    #[inline]
+    pub fn unsupported_logical(tech: LogicalLevelTechnique) -> Self {
+        Self::UnsupportedTechnique {
+            level: ErrorLevel::Logical,
+            technique: TechniqueDiscriminant::Logical(tech),
+        }
+    }
+    #[inline]
+    pub fn invalid_multiple(multiple_of: usize, got: usize) -> Self {
+        Self::InvalidLength { multiple_of, got }
+    }
 }
