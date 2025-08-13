@@ -164,39 +164,50 @@ pub enum MetadataErrorKind {
 
 // Helper functions
 impl MltError {
-    #[inline]
+    #[cold]
+    #[inline(never)]
     pub fn varint_eof(at: Option<usize>) -> Self {
         Self::Varint {
             at,
             kind: VarintError::Eof,
         }
     }
-    #[inline]
+
+    #[cold]
+    #[inline(never)]
     pub fn varint_overflow(at: Option<usize>) -> Self {
         Self::Varint {
             at,
             kind: VarintError::Overflow,
         }
     }
-    #[inline]
+
+    #[cold]
+    #[inline(never)]
     pub fn protobuf(offset: usize, kind: ProtobufError) -> Self {
         Self::Protobuf { offset, kind }
     }
-    #[inline]
+
+    #[cold]
+    #[inline(never)]
     pub fn unsupported_physical(tech: PhysicalLevelTechnique) -> Self {
         Self::UnsupportedTechnique {
             level: ErrorLevel::Physical,
             technique: TechniqueDiscriminant::Physical(tech),
         }
     }
-    #[inline]
+
+    #[cold]
+    #[inline(never)]
     pub fn unsupported_logical(tech: LogicalLevelTechnique) -> Self {
         Self::UnsupportedTechnique {
             level: ErrorLevel::Logical,
             technique: TechniqueDiscriminant::Logical(tech),
         }
     }
-    #[inline]
+
+    #[cold]
+    #[inline(never)]
     pub fn invalid_multiple(multiple_of: usize, got: usize) -> Self {
         Self::InvalidLength { multiple_of, got }
     }
