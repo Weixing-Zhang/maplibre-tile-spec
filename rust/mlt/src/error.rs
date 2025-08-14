@@ -1,3 +1,4 @@
+use bytes_varint::VarIntError as BvVarIntError;
 use thiserror::Error;
 
 use crate::metadata::stream_encoding::{LogicalLevelTechnique, PhysicalLevelTechnique};
@@ -58,11 +59,8 @@ pub enum MltError {
     //---------------------------------------------------------
     // Decoding
     //---------------------------------------------------------
-    #[error("Varint decode error at={at:?} kind={kind:?}")]
-    Varint {
-        at: Option<usize>,
-        kind: VarintError,
-    },
+    #[error("Varint decode error: {0:?}")]
+    Varint(#[from] VarintError),
 
     #[error("Protobuf decode error at offset={offset} kind={kind:?}")]
     Protobuf { offset: usize, kind: ProtobufError },
@@ -133,11 +131,15 @@ pub enum PropertyParseKind {
 }
 
 /// Varint failures.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 pub enum VarintError {
+    #[error("Unexpected end of input while reading varint")]
     Eof,
+    #[error("Varint too long")]
     TooLong,
+    #[error("Varint overflowed target integer type")]
     Overflow,
+    #[error("Varint not in canonical form")]
     NonCanonical,
 }
 
@@ -166,24 +168,6 @@ pub enum MetadataErrorKind {
 impl MltError {
     #[cold]
     #[inline(never)]
-    pub fn varint_eof(at: Option<usize>) -> Self {
-        Self::Varint {
-            at,
-            kind: VarintError::Eof,
-        }
-    }
-
-    #[cold]
-    #[inline(never)]
-    pub fn varint_overflow(at: Option<usize>) -> Self {
-        Self::Varint {
-            at,
-            kind: VarintError::Overflow,
-        }
-    }
-
-    #[cold]
-    #[inline(never)]
     pub fn protobuf(offset: usize, kind: ProtobufError) -> Self {
         Self::Protobuf { offset, kind }
     }
@@ -210,5 +194,17 @@ impl MltError {
     #[inline(never)]
     pub fn invalid_multiple(multiple_of: usize, got: usize) -> Self {
         Self::InvalidLength { multiple_of, got }
+    }
+}
+
+//---------------------------------------------------------
+// bytes-varint integration
+//---------------------------------------------------------
+impl From<BvVarIntError> for MltError {
+    fn from(e: BvVarIntError) -> Self {
+        match e {
+            BvVarIntError::BufferUnderflow => MltError::Varint(VarintError::Eof),
+            BvVarIntError::NumericOverflow => MltError::Varint(VarintError::Overflow),
+        }
     }
 }
